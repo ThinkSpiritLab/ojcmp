@@ -26,6 +26,7 @@ macro_rules! judge {
 }
 
 #[test]
+#[allow(clippy::cognitive_complexity)]
 fn test_compare() {
     use crate::compare::Comparison::*;
 
@@ -52,4 +53,11 @@ fn test_compare() {
     judge!(AC, b"1 2 \r\n3 4", b"1 2                  \r\n3 4");
     judge!(AC, b"1\r\n\r\n\r\n", b"1  ");
     judge!(AC, b"1\r\n2\r\n", b"1 \n2 \n");
+    judge!(AC, b"1\r\n2\r\n", b"1 \n2\t\n");
+    judge!(AC, b"\t\n1", b"\r\n1");
+    judge!(WA, b"asd", b"qwe");
+    judge!(PE, b" asd", b"  asd");
+    judge!(WA, b" asd", b"\nasd");
+    judge!(PE, b" asd  \n", b"\tasd  \n");
+    judge!(WA, b" asd  2\n", b"\tasd  1\n");
 }

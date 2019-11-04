@@ -30,7 +30,7 @@ impl Drop for Chars {
 
 impl Chars {
     pub unsafe fn with_buf(buf: &mut [u8], fd: RawFd) -> Self {
-        assert!(buf.len() > 0);
+        assert!(!buf.is_empty());
         Self {
             s: null(),
             e: null(),
