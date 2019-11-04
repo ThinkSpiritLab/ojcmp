@@ -69,9 +69,12 @@ fn main() {
     };
     let std_fd = open_ro(opt.std_path);
 
-    const CAP: usize = 4 * 1024 * 1024;
-    let mut std = Chars::with_capacity(CAP, std_fd);
-    let mut user = Chars::with_capacity(CAP, user_fd);
+    const CAP: usize = 64 * 1024;
+    static mut STD_BUF: [u8; CAP] = [0; CAP];
+    static mut USER_BUF: [u8; CAP] = [0; CAP];
+
+    let mut std = unsafe { Chars::with_buf(&mut STD_BUF[..], std_fd) };
+    let mut user = unsafe { Chars::with_buf(&mut USER_BUF[..], user_fd) };
 
     let cmp = compare(&mut std, &mut user);
 

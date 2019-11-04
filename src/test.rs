@@ -12,22 +12,6 @@ impl CharsLike for Cursor<&[u8]> {
             Err(_) => EOF,
         }
     }
-    fn next_char_strip_cr(&mut self) -> u16 {
-        let c = self.next_char();
-        if c == EOF || (c as u8) != b'\r' {
-            return c;
-        }
-        let n = self.next_char();
-        if n == EOF {
-            return u16::from(b'\r');
-        }
-        if (n as u8) == b'\n' {
-            return u16::from(b'\n');
-        }
-        let pos = self.position() - 1;
-        self.set_position(pos);
-        u16::from(b'\r')
-    }
 }
 
 #[cfg(test)]
@@ -67,4 +51,5 @@ fn test_compare() {
     judge!(AC, b"1 2  \n3 4", b"1 2    \t\n3 4");
     judge!(AC, b"1 2 \r\n3 4", b"1 2                  \r\n3 4");
     judge!(AC, b"1\r\n\r\n\r\n", b"1  ");
+    judge!(AC, b"1\r\n2\r\n", b"1 \n2 \n");
 }

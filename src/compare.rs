@@ -9,8 +9,8 @@ pub enum Comparison {
 
 /// Compare `std` and `user`. The process will be terminated on error.
 pub fn compare(std: &mut impl CharsLike, user: &mut impl CharsLike) -> Comparison {
-    let mut stdchar = std.next_char_strip_cr();
-    let mut userchar = user.next_char_strip_cr();
+    let mut stdchar = std.next_char();
+    let mut userchar = user.next_char();
 
     let mut ans = Comparison::AC;
 
@@ -33,8 +33,8 @@ pub fn compare(std: &mut impl CharsLike, user: &mut impl CharsLike) -> Compariso
 
         let (a, b) = (stdchar as u8, userchar as u8);
         if a == b {
-            stdchar = std.next_char_strip_cr();
-            userchar = user.next_char_strip_cr();
+            stdchar = std.next_char();
+            userchar = user.next_char();
             continue;
         }
 
@@ -43,8 +43,8 @@ pub fn compare(std: &mut impl CharsLike, user: &mut impl CharsLike) -> Compariso
                 return Comparison::WA;
             }
             if poll_endline(user) {
-                stdchar = std.next_char_strip_cr();
-                userchar = user.next_char_strip_cr();
+                stdchar = std.next_char();
+                userchar = user.next_char();
                 continue;
             } else {
                 return Comparison::WA;
@@ -55,8 +55,8 @@ pub fn compare(std: &mut impl CharsLike, user: &mut impl CharsLike) -> Compariso
                 return Comparison::WA;
             }
             if poll_endline(std) {
-                stdchar = std.next_char_strip_cr();
-                userchar = user.next_char_strip_cr();
+                stdchar = std.next_char();
+                userchar = user.next_char();
                 continue;
             } else {
                 return Comparison::WA;
@@ -90,8 +90,8 @@ pub fn compare(std: &mut impl CharsLike, user: &mut impl CharsLike) -> Compariso
         let flagb = b == b'\n';
 
         if flaga & flagb {
-            stdchar = std.next_char_strip_cr();
-            userchar = user.next_char_strip_cr();
+            stdchar = std.next_char();
+            userchar = user.next_char();
             continue;
         }
         if flaga | flagb {
@@ -99,8 +99,8 @@ pub fn compare(std: &mut impl CharsLike, user: &mut impl CharsLike) -> Compariso
         }
         if a == b {
             ans = Comparison::PE;
-            stdchar = std.next_char_strip_cr();
-            userchar = user.next_char_strip_cr();
+            stdchar = std.next_char();
+            userchar = user.next_char();
             continue;
         } else {
             return Comparison::WA;
@@ -126,7 +126,7 @@ fn poll_eof(chars: &mut impl CharsLike) -> bool {
 /// poll until b'\n'.
 /// ensure that all chars remaining in `chars` line are ascii whitespaces
 fn poll_endline(chars: &mut impl CharsLike) -> bool {
-    let mut c = chars.next_char_strip_cr();
+    let mut c = chars.next_char();
     loop {
         if c == EOF || (c as u8) == b'\n' {
             return true;
@@ -134,17 +134,17 @@ fn poll_endline(chars: &mut impl CharsLike) -> bool {
         if !(c as u8).is_ascii_whitespace() {
             return false;
         }
-        c = chars.next_char_strip_cr();
+        c = chars.next_char();
     }
 }
 
 /// poll until b'\n' or non-space or EOF
 fn poll_nonspace(chars: &mut impl CharsLike) -> u16 {
-    let mut c = chars.next_char_strip_cr();
+    let mut c = chars.next_char();
     loop {
         if c == EOF || (c as u8) == b'\n' || !(c as u8).is_ascii_whitespace() {
             return c;
         }
-        c = chars.next_char_strip_cr();
+        c = chars.next_char();
     }
 }

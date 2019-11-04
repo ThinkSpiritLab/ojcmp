@@ -2,19 +2,20 @@ use crate::errno::on_error;
 
 use std::os::unix::io::RawFd;
 use std::ptr::null;
+use std::ptr::NonNull;
 
 pub const EOF: u16 = 0xffff;
 
 pub trait CharsLike {
     fn next_char(&mut self) -> u16;
-    fn next_char_strip_cr(&mut self) -> u16;
 }
 
 /// Chars generates chars from fd. It terminates the process with errno when an error occurs.
 pub struct Chars {
     s: *const u8,
     e: *const u8,
-    buf: Box<[u8]>,
+    buf: NonNull<u8>,
+    buf_len: usize,
     fd: RawFd,
 }
 
@@ -28,17 +29,13 @@ impl Drop for Chars {
 }
 
 impl Chars {
-    pub fn with_capacity(cap: usize, fd: RawFd) -> Self {
-        assert!(cap > 0);
-        let buf: Box<[u8]> = unsafe {
-            let mut buf = Vec::with_capacity(cap);
-            buf.set_len(cap);
-            buf.into_boxed_slice()
-        };
+    pub unsafe fn with_buf(buf: &mut [u8], fd: RawFd) -> Self {
+        assert!(buf.len() > 0);
         Self {
             s: null(),
             e: null(),
-            buf,
+            buf: NonNull::new_unchecked(buf.as_mut_ptr()),
+            buf_len: buf.len(),
             fd,
         }
     }
@@ -46,8 +43,8 @@ impl Chars {
     #[inline(always)]
     unsafe fn fill_buf(&mut self) -> usize {
         use libc::c_void;
-        let buf: *mut c_void = self.buf.as_mut_ptr() as _;
-        let ret = libc::read(self.fd, buf, self.buf.len());
+        let buf: *mut c_void = self.buf.as_ptr() as _;
+        let ret = libc::read(self.fd, buf, self.buf_len);
         if ret < 0 {
             on_error()
         }
@@ -57,15 +54,6 @@ impl Chars {
     /// Read bytes until EOF
     pub fn drop_all(mut self) {
         unsafe { while self.fill_buf() > 0 {} }
-    }
-}
-
-impl Chars {
-    /// precondition: buf has valid data
-    /// precondition: self.s > self.buf.as_ptr()
-    #[inline(always)]
-    unsafe fn go_back(&mut self) {
-        self.s = self.s.sub(1)
     }
 }
 
@@ -87,22 +75,5 @@ impl CharsLike for Chars {
             self.e = s.add(len as usize);
             u16::from(*s)
         }
-    }
-
-    #[inline(always)]
-    fn next_char_strip_cr(&mut self) -> u16 {
-        let c = self.next_char();
-        if c == EOF || (c as u8) != b'\r' {
-            return c;
-        }
-        let n = self.next_char();
-        if n == EOF {
-            return u16::from(b'\r');
-        }
-        if (n as u8) == b'\n' {
-            return u16::from(b'\n');
-        }
-        unsafe { self.go_back() };
-        u16::from(b'\r')
     }
 }
