@@ -2,27 +2,23 @@
 
 > [experimental] online judge comparer
 
-## Current Implementation
+## Build
 
-trim_end(file)
-
-```rust
-judge!(AC, b"1\r\n\r\n\r\n", b"1  ");
+```bash
+cargo build --release
 ```
 
-trim_end(line)
+Install by cargo
 
-```rust
-judge!(AC, b"1 \n", b"1");
+```bash
+cargo install --path .
 ```
 
-check spaces between non-space chars
+Install manually
 
-```rust
-judge!(PE, b"1 3\n", b"1         3\n");
+```bash
+cp target/release/ojcmp /usr/bin
 ```
-
-more test cases: [src/test.rs](https://github.com/Nugine/ojcmp/tree/master/src/test.rs)
 
 ## Usage
 
@@ -50,3 +46,25 @@ OPTIONS:
 | stdout | "AC" / "WA" / "PE" |
 | stderr | strerror(errno)    |
 | code   | errno              |
+
+## Current Implementation
+
+trim_end(file)
+
+```rust
+judge!(AC, b"1\r\n\r\n\r\n", b"1  ");
+```
+
+trim_end(line)
+
+```rust
+judge!(AC, b"1 \n", b"1");
+```
+
+check spaces between non-space chars
+
+```rust
+judge!(PE, b"1 3\n", b"1         3\n");
+```
+
+more test cases: [src/test.rs](https://github.com/Nugine/ojcmp/tree/master/src/test.rs)
