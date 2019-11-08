@@ -60,4 +60,16 @@ fn test_compare() {
     judge!(WA, b" asd", b"\nasd");
     judge!(PE, b" asd  \n", b"\tasd  \n");
     judge!(WA, b" asd  2\n", b"\tasd  1\n");
+    judge!(AC, b"1\r", b"1\t");
+    judge!(WA, b"1\na", b"1\n");
+    judge!(WA, b"1\n", b"1\na");
+    judge!(WA, b"1a", b"1");
+    judge!(WA, b"1", b"1a");
+    judge!(WA, b"1a \nb", b"1  \nb");
+    judge!(WA, b"1\naa", b"1\n");
+    judge!(WA, b"1\n", b"1\naa");
+    judge!(WA, b"1 a", b"1 ");
+    judge!(WA, b"1 aa", b"1 ");
+    judge!(WA, b"1 ", b"1 a");
+    judge!(WA, b"1 ", b"1 aa");
 }

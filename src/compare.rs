@@ -16,6 +16,12 @@ pub fn compare(std: &mut impl CharsLike, user: &mut impl CharsLike) -> Compariso
 
     loop {
         if stdchar == EOF {
+            if userchar == EOF {
+                return ans;
+            }
+            if !(userchar as u8).is_ascii_whitespace() {
+                return Comparison::WA;
+            }
             if poll_eof(user) {
                 return ans;
             } else {
@@ -24,6 +30,12 @@ pub fn compare(std: &mut impl CharsLike, user: &mut impl CharsLike) -> Compariso
         }
 
         if userchar == EOF {
+            if stdchar == EOF {
+                return ans;
+            }
+            if !(stdchar as u8).is_ascii_whitespace() {
+                return Comparison::WA;
+            }
             if poll_eof(std) {
                 return ans;
             } else {

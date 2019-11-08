@@ -24,7 +24,7 @@ cp target/release/ojcmp /usr/bin
 
 ```
 $ ojcmp --help
-ojcmp 0.1.0
+ojcmp 0.1.2
 
 USAGE:
     ojcmp [FLAGS] [OPTIONS] --std <path>
@@ -39,7 +39,7 @@ OPTIONS:
     -u, --user <path>    User file path. Read from stdin if it's not given.
 ```
 
-## Return value
+## Return Value
 
 | type   | value              |
 | ------ | ------------------ |
@@ -68,3 +68,8 @@ judge!(PE, b"1 3\n", b"1         3\n");
 ```
 
 more test cases: [src/test.rs](https://github.com/Nugine/ojcmp/tree/master/src/test.rs)
+
+## Change Log
+
++ v0.1.2 fix algorithm bug
++ v0.1.1 use unsafe static buffer
