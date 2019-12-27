@@ -8,16 +8,19 @@ pub mod compare;
 pub mod test;
 
 pub mod errno {
-    pub unsafe fn get_errno() -> i32 {
-        *libc::__errno_location() as _
+    pub fn get_errno() -> i32 {
+        unsafe { *libc::__errno_location() as _ }
     }
 
-    use std::ffi::CStr;
-    pub unsafe fn on_error() -> ! {
+    pub fn on_error() -> ! {
+        use std::ffi::CStr;
         let errno = get_errno();
-        let ptr = libc::strerror(errno); // non-null
-        let msg = CStr::from_ptr(ptr);
-        eprintln!("{}", msg.to_str().unwrap());
+        let msg = unsafe {
+            let ptr = libc::strerror(errno); // non-null
+            let msg = CStr::from_ptr(ptr);
+            msg.to_str().unwrap()
+        };
+        eprintln!("{}", msg);
         std::process::exit(errno)
     }
 }
@@ -73,8 +76,11 @@ fn main() {
     static mut STD_BUF: [u8; CAP] = [0; CAP];
     static mut USER_BUF: [u8; CAP] = [0; CAP];
 
-    let mut std = unsafe { Chars::with_buf(&mut STD_BUF[..], std_fd) };
-    let mut user = unsafe { Chars::with_buf(&mut USER_BUF[..], user_fd) };
+    let std_buf: &mut [u8] = unsafe { &mut STD_BUF[..] };
+    let user_buf: &mut [u8] = unsafe { &mut USER_BUF[..] };
+
+    let mut std = Chars::with_buf(std_buf, std_fd);
+    let mut user = Chars::with_buf(user_buf, user_fd);
 
     let cmp = compare(&mut std, &mut user);
 

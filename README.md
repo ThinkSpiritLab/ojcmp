@@ -71,5 +71,6 @@ more test cases: [src/test.rs](https://github.com/Nugine/ojcmp/tree/master/src/t
 
 ## Change Log
 
++ v0.1.3 no functional changes
 + v0.1.2 fix algorithm bug
 + v0.1.1 use unsafe static buffer

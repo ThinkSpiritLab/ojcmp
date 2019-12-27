@@ -1,16 +1,17 @@
-use crate::chars::{CharsLike, EOF};
+use crate::chars::{CharEx, CharsLike, EOF};
 use crate::compare::compare;
 
 use std::io::Cursor;
 use std::io::Read;
 
 impl CharsLike for Cursor<&[u8]> {
-    fn next_char(&mut self) -> u16 {
+    fn next_char(&mut self) -> CharEx {
         let mut buf = [0_u8; 1];
         match self.read_exact(&mut buf) {
             Ok(_) => u16::from(buf[0]),
             Err(_) => EOF,
         }
+        .into()
     }
 }
 
@@ -72,4 +73,6 @@ fn test_compare() {
     judge!(WA, b"1 aa", b"1 ");
     judge!(WA, b"1 ", b"1 a");
     judge!(WA, b"1 ", b"1 aa");
+    judge!(AC, b"1\n\n3\n", b"1\r\n  \r\n3\t\n");
+    judge!(WA, b"1\n3\n", b"1\r\n  \r\n3\t\n");
 }

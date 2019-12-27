@@ -1,4 +1,4 @@
-use crate::chars::{CharsLike, EOF};
+use crate::chars::{CharEx, CharsLike};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Comparison {
@@ -15,11 +15,11 @@ pub fn compare(std: &mut impl CharsLike, user: &mut impl CharsLike) -> Compariso
     let mut ans = Comparison::AC;
 
     loop {
-        if stdchar == EOF {
-            if userchar == EOF {
+        if stdchar.is_eof() {
+            if userchar.is_eof() {
                 return ans;
             }
-            if !(userchar as u8).is_ascii_whitespace() {
+            if !userchar.as_u8().is_ascii_whitespace() {
                 return Comparison::WA;
             }
             if poll_eof(user) {
@@ -29,11 +29,11 @@ pub fn compare(std: &mut impl CharsLike, user: &mut impl CharsLike) -> Compariso
             }
         }
 
-        if userchar == EOF {
-            if stdchar == EOF {
+        if userchar.is_eof() {
+            if stdchar.is_eof() {
                 return ans;
             }
-            if !(stdchar as u8).is_ascii_whitespace() {
+            if !stdchar.as_u8().is_ascii_whitespace() {
                 return Comparison::WA;
             }
             if poll_eof(std) {
@@ -43,7 +43,7 @@ pub fn compare(std: &mut impl CharsLike, user: &mut impl CharsLike) -> Compariso
             }
         }
 
-        let (a, b) = (stdchar as u8, userchar as u8);
+        let (a, b) = (stdchar.as_u8(), userchar.as_u8());
         if a == b {
             stdchar = std.next_char();
             userchar = user.next_char();
@@ -93,11 +93,11 @@ pub fn compare(std: &mut impl CharsLike, user: &mut impl CharsLike) -> Compariso
             userchar = poll_nonspace(user);
         }
 
-        if stdchar == EOF || userchar == EOF {
+        if stdchar.is_eof() || userchar.is_eof() {
             continue;
         }
 
-        let (a, b) = (stdchar as u8, userchar as u8);
+        let (a, b) = (stdchar.as_u8(), userchar.as_u8());
         let flaga = a == b'\n';
         let flagb = b == b'\n';
 
@@ -125,10 +125,10 @@ pub fn compare(std: &mut impl CharsLike, user: &mut impl CharsLike) -> Compariso
 fn poll_eof(chars: &mut impl CharsLike) -> bool {
     let mut c = chars.next_char();
     loop {
-        if c == EOF {
+        if c.is_eof() {
             return true;
         }
-        if !(c as u8).is_ascii_whitespace() {
+        if !c.as_u8().is_ascii_whitespace() {
             return false;
         }
         c = chars.next_char();
@@ -140,10 +140,10 @@ fn poll_eof(chars: &mut impl CharsLike) -> bool {
 fn poll_endline(chars: &mut impl CharsLike) -> bool {
     let mut c = chars.next_char();
     loop {
-        if c == EOF || (c as u8) == b'\n' {
+        if c.is_eof() || c.as_u8() == b'\n' {
             return true;
         }
-        if !(c as u8).is_ascii_whitespace() {
+        if !c.as_u8().is_ascii_whitespace() {
             return false;
         }
         c = chars.next_char();
@@ -151,10 +151,10 @@ fn poll_endline(chars: &mut impl CharsLike) -> bool {
 }
 
 /// poll until b'\n' or non-space or EOF
-fn poll_nonspace(chars: &mut impl CharsLike) -> u16 {
+fn poll_nonspace(chars: &mut impl CharsLike) -> CharEx {
     let mut c = chars.next_char();
     loop {
-        if c == EOF || (c as u8) == b'\n' || !(c as u8).is_ascii_whitespace() {
+        if c.is_eof() || c.as_u8() == b'\n' || !c.as_u8().is_ascii_whitespace() {
             return c;
         }
         c = chars.next_char();
