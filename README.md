@@ -1,6 +1,12 @@
 # ojcmp
 
-> [experimental] online judge comparer
+> online judge comparer
+
+## Status
+
+1. proof of concept
+2. **developing**: 0.2.0-alpha
+3. ...
 
 ## Build
 
