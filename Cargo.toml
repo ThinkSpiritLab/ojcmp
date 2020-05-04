@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 libc = "0.2.69"
 structopt = "0.3.14"
+backtrace = "0.3.46"
