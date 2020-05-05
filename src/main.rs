@@ -19,7 +19,7 @@ pub struct Opt {
     pub std_path: PathBuf,
 
     #[structopt(name = "user", short = "u", long, value_name = "path")]
-    /// User file path. Read from stdin if it's not given
+    /// User file path. Reads from stdin if it's not given
     pub user_path: Option<PathBuf>,
 
     #[structopt(name = "all", short = "a", long)]
