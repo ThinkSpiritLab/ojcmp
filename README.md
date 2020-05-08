@@ -1,5 +1,7 @@
 # ojcmp
 
+[![crates.io](https://img.shields.io/crates/v/ojcmp.svg)](https://crates.io/crates/ojcmp) ![Test](https://github.com/Nugine/ojcmp/workflows/Test/badge.svg)
+
 > online judge comparer
 
 ## Status
@@ -55,7 +57,7 @@ OPTIONS:
 | type   | value                                      |
 | ------ | ------------------------------------------ |
 | code   | errno                                      |
-| stdout | "AC" | "WA" | "PE"                         |
+| stdout | "AC" / "WA" / "PE"                         |
 | stderr | error message and optional stack backtrace |
 
 ## Current Implementation
