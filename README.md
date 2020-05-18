@@ -6,7 +6,7 @@
 
 ## Status
 
-Maintaining `0.2.0`
+Maintaining `0.2.1`
 
 ## Install
 
@@ -35,7 +35,7 @@ cp target/release/ojcmp /usr/bin
 ## Usage
 
 ```
-ojcmp 0.2.0
+ojcmp 0.2.1
 
 USAGE:
     ojcmp [FLAGS] [OPTIONS] --std <path>
@@ -47,7 +47,8 @@ FLAGS:
     -V, --version      Prints version information
 
 OPTIONS:
-    -m, --mode <mode>    CompareMode ("normal"|"strict") [default: normal]
+        --eps <eps>      Eps for float comparing
+    -m, --mode <mode>    CompareMode ("normal"|"strict"|"spj_float") [default: normal]
     -s, --std <path>     Std file path
     -u, --user <path>    User file path. Reads from stdin if it's not given
 ```
@@ -86,10 +87,25 @@ judge!(PE, b"1 3\n", b"1         3\n");
 
 User file must have the same bytes with std file.
 
+The two byte streams must be exactly the same.
+
+There is no "PE" in this mode.
+
+### Mode: SpjFloat
+
+Compare two streams of float numbers which are splitted by [ascii whitespaces](https://infra.spec.whatwg.org/#ascii-whitespace).
+
+Parse any float number as f64 (aka `double` in C language).
+
+Ascii whitespaces between two float numbers are considered as a single separator symbol.
+
+Use CLI option `--eps` to specify eps value, for example `--eps 1e-3`.
+
 There is no "PE" in this mode.
 
 ## Change Log
 
+- v0.2.1 Add spj_float mode.
 - v0.2.0 Add strict mode. No break changes.
 
 + v0.1.3 No functional changes
