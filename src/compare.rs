@@ -1,9 +1,11 @@
 use std::path::PathBuf;
 
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum CompareMode {
     Normal,
     Strict,
+    SpjFloat
 }
 
 pub struct CompareTask {

@@ -1,5 +1,5 @@
 use ojcmp::compare::{CompareMode, CompareTask, Comparer, Comparison};
-use ojcmp::comparers::{NormalComparer, StrictComparer};
+use ojcmp::comparers::{NormalComparer, SpjFloatComparer, StrictComparer};
 
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -8,6 +8,7 @@ fn parse_mode(s: &str) -> Result<CompareMode, &'static str> {
     match s {
         "normal" => Ok(CompareMode::Normal),
         "strict" => Ok(CompareMode::Strict),
+        "spj_float" => Ok(CompareMode::SpjFloat),
         _ => Err("Unknown mode"),
     }
 }
@@ -33,13 +34,19 @@ pub struct Opt {
         default_value = "normal",
         parse(try_from_str = parse_mode)
     )]
-    /// CompareMode ("normal"|"strict")
+    /// CompareMode ("normal"|"strict"|"spj_float")
     pub mode: CompareMode,
 
     #[structopt(name = "backtrace", short = "b", long)]
     /// Prints stack backtrace when fatal error occurs
     pub backtrace: bool,
+
+    #[structopt(name = "eps", long)]
+    /// Eps for float comparing
+    pub eps: Option<f64>,
 }
+
+const DEFAULT_EPS: f64 = 1e-10;
 
 fn main() {
     let args = Opt::from_args();
@@ -49,6 +56,8 @@ fn main() {
     let comparer: Box<dyn Comparer> = match args.mode {
         CompareMode::Normal => Box::new(NormalComparer::new()),
         CompareMode::Strict => Box::new(StrictComparer::new()),
+        CompareMode::SpjFloat => Box::new(SpjFloatComparer::new(args.eps.unwrap_or(DEFAULT_EPS))),
+        _ => unreachable!(),
     };
 
     let task = CompareTask {

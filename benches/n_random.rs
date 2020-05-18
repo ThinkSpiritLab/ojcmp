@@ -98,5 +98,63 @@ fn bench_space(c: &mut Criterion) {
     bench_normal(c, generate_space, "normal-space")
 }
 
+fn bench_spj_float(c: &mut Criterion) {
+    const EPS: f64 = 1e-8;
+
+    fn gen(n: usize) -> (String, String) {
+        use std::fmt::Write;
+
+        let mut s = String::with_capacity(n * 20);
+        let mut u = String::with_capacity(n * 20);
+        let mut buf = String::with_capacity(20);
+
+        for _ in 0..n {
+            let num = rand::random::<f64>() * 100.0;
+            let diff = rand::random::<f64>() / 1e9;
+            let sgn = rand::random::<bool>();
+
+            let rhs = num + if sgn { diff } else { -diff };
+
+            write!(buf, "{}\n", num).unwrap();
+            s.push_str(buf.as_str());
+            buf.clear();
+
+            write!(buf, "{}\n", rhs).unwrap();
+            u.push_str(buf.as_str());
+            buf.clear();
+        }
+
+        (s, u)
+    }
+
+    use ojcmp::compare::Comparison;
+    use ojcmp::comparers::ByteComparer;
+    use std::io::Cursor;
+
+    let group_name = "spj_float";
+    let mut group = c.benchmark_group(group_name);
+    let ns = [
+        1, 100, 500, 1000, 5000, 10_000, 50_000, 100_000, 500_000, 1_000_000, 5_000_000,
+    ];
+    let inputs = ns.iter().map(|&n| (n, gen(n as usize))).collect::<Vec<_>>();
+
+    for &(n, ref input) in inputs.iter() {
+        group.throughput(Throughput::Elements(n));
+        group.bench_with_input(BenchmarkId::from_parameter(n), input, |b, (s, u)| {
+            let comparer = ojcmp::comparers::SpjFloatComparer::new(EPS);
+
+            b.iter(|| {
+                let mut s_reader = Cursor::new(s.as_bytes());
+                let mut u_reader = Cursor::new(u.as_bytes());
+                assert_eq!(
+                    comparer.compare(&mut s_reader, &mut u_reader),
+                    Comparison::AC
+                );
+            })
+        });
+    }
+}
+
+criterion_group!(spj, bench_spj_float);
 criterion_group!(normal, bench_same, bench_endline, bench_space);
-criterion_main!(normal);
+criterion_main!(normal, spj);

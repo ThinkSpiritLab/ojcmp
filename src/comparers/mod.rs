@@ -1,8 +1,10 @@
 mod normal;
 mod strict;
+mod spj_float;
 
 pub use self::normal::NormalComparer;
 pub use self::strict::StrictComparer;
+pub use self::spj_float::SpjFloatComparer;
 
 use crate::byte_reader::{ByteReader, ByteReaderLike};
 use crate::compare::{CompareTask, Comparer, Comparison};

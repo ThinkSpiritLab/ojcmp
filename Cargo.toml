@@ -13,6 +13,7 @@ repository = "https://github.com/Nugine/ojcmp"
 libc = "0.2.69"
 structopt = "0.3.14"
 backtrace = "0.3.46"
+lexical-core = "0.7.4"
 
 [dev-dependencies]
 rand = "0.7.3"
