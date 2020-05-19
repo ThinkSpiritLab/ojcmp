@@ -46,8 +46,6 @@ pub struct Opt {
     pub eps: Option<f64>,
 }
 
-const DEFAULT_EPS: f64 = 1e-10;
-
 fn main() {
     let args = Opt::from_args();
 
@@ -56,7 +54,7 @@ fn main() {
     let comparer: Box<dyn Comparer> = match args.mode {
         CompareMode::Normal => Box::new(NormalComparer::new()),
         CompareMode::Strict => Box::new(StrictComparer::new()),
-        CompareMode::SpjFloat => Box::new(SpjFloatComparer::new(args.eps.unwrap_or(DEFAULT_EPS))),
+        CompareMode::SpjFloat => Box::new(SpjFloatComparer::new(args.eps.unwrap_or(f64::EPSILON))),
         _ => unreachable!(),
     };
 

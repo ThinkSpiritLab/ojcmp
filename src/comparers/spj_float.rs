@@ -6,8 +6,15 @@ pub struct SpjFloatComparer {
     eps: f64,
 }
 
+#[derive(Debug, thiserror::Error)]
+#[error("Eps value must be a normal float number: eps = \"{0}\"")]
+struct AbnormalFloatError(f64);
+
 impl SpjFloatComparer {
     pub fn new(eps: f64) -> Self {
+        if !eps.is_normal() {
+            crate::error::exit(1, AbnormalFloatError(eps));
+        }
         Self { eps }
     }
 }
@@ -37,8 +44,8 @@ fn compare(std: &mut impl ByteReaderLike, user: &mut impl ByteReaderLike, eps: f
             (None, None) => return Comparison::AC,
 
             (Some(a), Some(b)) => {
-                let diff = (b - a).abs();
-                if diff >= eps {
+                let diff = (b - a).abs(); // check nan or +inf !!!
+                if let None | Some(std::cmp::Ordering::Greater) = diff.partial_cmp(&eps) {
                     return Comparison::WA;
                 }
             }
@@ -120,4 +127,10 @@ fn test_spj_float_comparer() {
 
     judge!(AC, b"1.0", b"1.00000000009");
     judge!(AC, b"1.0", b"0.99999999991");
+
+    judge!(WA, b"1.0", b"nan");
+    judge!(WA, b"nan", b"1.0");
+
+    judge!(WA, b"0.0", b"-inf");
+    judge!(WA, b"0.0", b"+inf");
 }
