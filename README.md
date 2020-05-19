@@ -6,7 +6,7 @@
 
 ## Status
 
-Maintaining `0.2.1`
+Maintaining `0.2.2`
 
 ## Install
 
@@ -35,7 +35,7 @@ cp target/release/ojcmp /usr/bin
 ## Usage
 
 ```
-ojcmp 0.2.1
+ojcmp 0.2.2
 
 USAGE:
     ojcmp [FLAGS] [OPTIONS] --std <path>
@@ -105,7 +105,8 @@ There is no "PE" in this mode.
 
 ## Change Log
 
-- v0.2.1 Add spj_float mode.
+- v0.2.2 Fix bug in nan handling. (yank v0.2.1)
+- v0.2.1 Add spj_float mode. (yanked)
 - v0.2.0 Add strict mode. No break changes.
 
 + v0.1.3 No functional changes
