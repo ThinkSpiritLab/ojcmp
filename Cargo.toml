@@ -1,11 +1,11 @@
 [package]
 name = "ojcmp"
-version = "0.2.2"
+version = "0.2.3-dev"
 authors = ["Nugine <nugine@foxmail.com>"]
 edition = "2018"
 license = "MIT"
 description = "online judge comparer"
-repository = "https://github.com/Nugine/ojcmp"
+repository = "https://github.com/ThinkSpiritLab/ojcmp"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

@@ -1,6 +1,6 @@
 # ojcmp
 
-[![crates.io](https://img.shields.io/crates/v/ojcmp.svg)](https://crates.io/crates/ojcmp) ![Test](https://github.com/Nugine/ojcmp/workflows/Test/badge.svg)
+[![crates.io](https://img.shields.io/crates/v/ojcmp.svg)](https://crates.io/crates/ojcmp) ![Test](https://github.com/ThinkSpiritLab/ojcmp/workflows/Test/badge.svg)
 
 > online judge comparer
 
