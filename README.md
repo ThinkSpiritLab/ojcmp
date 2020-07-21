@@ -1,12 +1,23 @@
 # ojcmp
 
-[![crates.io](https://img.shields.io/crates/v/ojcmp.svg)](https://crates.io/crates/ojcmp) ![Test](https://github.com/ThinkSpiritLab/ojcmp/workflows/Test/badge.svg)
+[![Crates.io][crates-badge]][crates-url]
+[![MIT licensed][mit-badge]][mit-url]
+![CI][ci-badge]
+[![unsafe forbidden][unsafe-forbidden-badge]](unsafe-forbidden-url)
+
+[crates-badge]: https://img.shields.io/crates/v/ojcmp.svg
+[crates-url]: https://crates.io/crates/ojcmp
+[mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg
+[mit-url]: LICENSE
+[ci-badge]: https://github.com/ThinkSpiritLab/ojcmp/workflows/CI/badge.svg
+[unsafe-forbidden-badge]: https://img.shields.io/badge/unsafe-forbidden-success.svg
+[unsafe-forbidden-url]: https://github.com/rust-secure-code/safety-dance/
 
 > online judge comparer
 
 ## Status
 
-Maintaining `0.2.2`
+Maintaining `0.3.0`
 
 ## Install
 
@@ -35,31 +46,30 @@ cp target/release/ojcmp /usr/bin
 ## Usage
 
 ```
-ojcmp 0.2.2
+ojcmp 0.3.0
+Nugine <nugine@foxmail.com>
 
 USAGE:
-    ojcmp [FLAGS] [OPTIONS] --std <path>
+    ojcmp <SUBCOMMAND>
 
 FLAGS:
-    -a, --all          Reads all bytes of user file even if it's already WA
-    -b, --backtrace    Prints stack backtrace when fatal error occurs
-    -h, --help         Prints help information
-    -V, --version      Prints version information
+    -h, --help       Prints help information
+    -V, --version    Prints version information
 
-OPTIONS:
-        --eps <eps>      Eps for float comparing
-    -m, --mode <mode>    CompareMode ("normal"|"strict"|"spj_float") [default: normal]
-    -s, --std <path>     Std file path
-    -u, --user <path>    User file path. Reads from stdin if it's not given
+SUBCOMMANDS:
+    float     Float compare
+    help      Prints this message or the help of the given subcommand(s)
+    normal    Normal compare
+    strict    Strict compare
 ```
 
 ## Return Value
 
-| type   | value                                      |
-| ------ | ------------------------------------------ |
-| code   | errno                                      |
-| stdout | "AC" / "WA" / "PE"                         |
-| stderr | error message and optional stack backtrace |
+| type   | value              |
+| ------ | ------------------ |
+| code   | errno              |
+| stdout | "AC" / "WA" / "PE" |
+| stderr | error message      |
 
 ## Current Implementation
 
@@ -91,7 +101,7 @@ The two byte streams must be exactly the same.
 
 There is no "PE" in this mode.
 
-### Mode: SpjFloat
+### Mode: Float
 
 Compare two streams of float numbers which are splitted by [ascii whitespaces](https://infra.spec.whatwg.org/#ascii-whitespace).
 
@@ -104,6 +114,8 @@ Use CLI option `--eps` to specify eps value, for example `--eps 1e-3`.
 There is no "PE" in this mode.
 
 ## Change Log
+
++ v0.3.0 Forbid unsafe code. Use subcommands for different modes.
 
 - v0.2.2 Fix bug in nan handling. (yank v0.2.1)
 - v0.2.1 Add spj_float mode. (yanked)
