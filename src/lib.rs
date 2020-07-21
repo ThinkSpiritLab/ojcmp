@@ -1,14 +1,10 @@
-#![deny(unsafe_code)]
+#![forbid(unsafe_code)]
+#![deny(missing_debug_implementations)]
 
-#[cfg(not(target_os = "linux"))]
-compile_error!("ojcmp only supports linux");
+mod byte_read;
+mod compare;
 
-pub mod compare;
-pub mod comparers;
-pub mod error;
+pub use byte_read::{ByteRead, ByteReader};
 
-#[allow(unsafe_code)]
-pub mod byte_reader;
-
-#[allow(unsafe_code)]
-pub mod one_mut;
+pub use compare::Comparison;
+pub use compare::{float_compare, normal_compare, strict_compare};

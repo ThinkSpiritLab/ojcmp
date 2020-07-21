@@ -1,71 +1,151 @@
-use ojcmp::compare::{CompareMode, CompareTask, Comparer, Comparison};
-use ojcmp::comparers::{NormalComparer, SpjFloatComparer, StrictComparer};
-
+use anyhow::{Context, Result};
+use std::fs::File;
+use std::io::{self, BufRead, BufReader};
+use std::panic::{self, catch_unwind, resume_unwind, AssertUnwindSafe, UnwindSafe};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-fn parse_mode(s: &str) -> Result<CompareMode, &'static str> {
-    match s {
-        "normal" => Ok(CompareMode::Normal),
-        "strict" => Ok(CompareMode::Strict),
-        "spj_float" => Ok(CompareMode::SpjFloat),
-        _ => Err("Unknown mode"),
-    }
+use ojcmp::{ByteReader, Comparison};
+
+#[derive(Debug, StructOpt)]
+#[structopt(author)]
+enum Opts {
+    /// Normal compare
+    Normal {
+        #[structopt(flatten)]
+        reader_opts: ReaderOpts,
+    },
+    /// Strict compare
+    Strict {
+        #[structopt(flatten)]
+        reader_opts: ReaderOpts,
+    },
+    /// Float compare
+    Float {
+        #[structopt(flatten)]
+        reader_opts: ReaderOpts,
+
+        #[structopt(name = "eps", short = "e", long)]
+        /// Eps for float comparing
+        eps: f64,
+    },
 }
 
 #[derive(Debug, StructOpt)]
-pub struct Opt {
+struct ReaderOpts {
     #[structopt(name = "std", short = "s", long, value_name = "path")]
     /// Std file path
-    pub std_path: PathBuf,
-
+    std: PathBuf,
     #[structopt(name = "user", short = "u", long, value_name = "path")]
-    /// User file path. Reads from stdin if it's not given
-    pub user_path: Option<PathBuf>,
-
-    #[structopt(name = "all", short = "a", long)]
+    /// User file path
+    user: PathBuf,
+    #[structopt(name = "read-all", short = "a", long)]
     /// Reads all bytes of user file even if it's already WA
-    pub read_all: bool,
+    read_all: bool,
 
     #[structopt(
-        name = "mode",
-        short = "m",
+        name = "buffer-size",
+        short = "b",
         long,
-        default_value = "normal",
-        parse(try_from_str = parse_mode)
+        default_value = "4096",
+        value_name = "bytes"
     )]
-    /// CompareMode ("normal"|"strict"|"spj_float")
-    pub mode: CompareMode,
-
-    #[structopt(name = "backtrace", short = "b", long)]
-    /// Prints stack backtrace when fatal error occurs
-    pub backtrace: bool,
-
-    #[structopt(name = "eps", long)]
-    /// Eps for float comparing
-    pub eps: Option<f64>,
+    /// Buffer size (in bytes) for both std and user file
+    buffer_size: usize,
 }
 
-fn main() {
-    let args = Opt::from_args();
-
-    ojcmp::error::set_backtrace(args.backtrace);
-
-    let comparer: Box<dyn Comparer> = match args.mode {
-        CompareMode::Normal => Box::new(NormalComparer::new()),
-        CompareMode::Strict => Box::new(StrictComparer::new()),
-        CompareMode::SpjFloat => Box::new(SpjFloatComparer::new(args.eps.unwrap_or(f64::EPSILON))),
-        _ => unreachable!(),
+fn catch_io<R>(f: impl FnOnce() -> R + UnwindSafe) -> io::Result<R> {
+    let hook = panic::take_hook();
+    let ret = match catch_unwind(f) {
+        Ok(ans) => Ok(ans),
+        Err(payload) => match payload.downcast::<io::Error>() {
+            Ok(e) => Err(*e),
+            Err(payload) => resume_unwind(payload),
+        },
     };
+    panic::set_hook(hook);
+    ret
+}
 
-    let task = CompareTask {
-        std_path: args.std_path,
-        user_path: args.user_path,
-        user_read_all: args.read_all,
-        mode: args.mode,
-    };
+fn open(reader_opts: &ReaderOpts) -> anyhow::Result<(File, File)> {
+    let std_file = File::open(&reader_opts.std)
+        .with_context(|| format!("Failed to open std file: {:?}", reader_opts.std))?;
 
-    let ans = comparer.exec(&task);
+    let user_file = File::open(&reader_opts.user)
+        .with_context(|| format!("Failed to open user file: {:?}", reader_opts.user))?;
+
+    anyhow::ensure!(
+        reader_opts.buffer_size >= 1024,
+        "buffer size is too small: buffer_size = {}",
+        reader_opts.buffer_size
+    );
+
+    Ok((std_file, user_file))
+}
+
+fn consume_all(reader: &mut impl BufRead) -> Result<()> {
+    loop {
+        let buf = reader.fill_buf()?;
+        let amt = buf.len();
+        if amt == 0 {
+            break Ok(());
+        }
+        reader.consume(amt);
+    }
+}
+
+fn main() -> Result<()> {
+    let opts: Opts = Opts::from_args();
+
+    let ans: Comparison;
+
+    match opts {
+        Opts::Normal { reader_opts } => {
+            let (std_file, user_file) = open(&reader_opts)?;
+            let mut std_reader = ByteReader::with_capacity(reader_opts.buffer_size, std_file);
+            let mut user_reader = ByteReader::with_capacity(reader_opts.buffer_size, user_file);
+
+            ans = catch_io(AssertUnwindSafe(|| {
+                ojcmp::normal_compare(&mut std_reader, &mut user_reader)
+            }))?;
+
+            if reader_opts.read_all {
+                consume_all(&mut user_reader)?;
+            }
+        }
+        Opts::Strict { reader_opts } => {
+            let (std_file, user_file) = open(&reader_opts)?;
+            let mut std_reader = BufReader::with_capacity(reader_opts.buffer_size, std_file);
+            let mut user_reader = BufReader::with_capacity(reader_opts.buffer_size, user_file);
+
+            ans = ojcmp::strict_compare(&mut std_reader, &mut user_reader)?;
+
+            if reader_opts.read_all {
+                consume_all(&mut user_reader)?;
+            }
+        }
+        Opts::Float { reader_opts, eps } => {
+            let (std_file, user_file) = open(&reader_opts)?;
+            let mut std_reader = ByteReader::with_capacity(reader_opts.buffer_size, std_file);
+            let mut user_reader = ByteReader::with_capacity(reader_opts.buffer_size, user_file);
+
+            anyhow::ensure!(
+                (eps == 0.0 || eps.is_normal()) && !eps.is_nan(),
+                "eps is invalid: eps = {}",
+                eps
+            );
+
+            anyhow::ensure!(eps >= 0.0, "eps must be non-negative: eps = {}", eps);
+
+            ans = catch_io(AssertUnwindSafe(|| {
+                ojcmp::float_compare(&mut std_reader, &mut user_reader, eps)
+            }))?;
+
+            if reader_opts.read_all {
+                consume_all(&mut user_reader)?;
+            }
+        }
+    }
 
     let output = match ans {
         Comparison::AC => "AC",
@@ -74,4 +154,6 @@ fn main() {
     };
 
     println!("{}", output);
+
+    Ok(())
 }

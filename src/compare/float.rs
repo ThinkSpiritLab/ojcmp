@@ -1,39 +1,18 @@
-use super::ByteComparer;
-use crate::byte_reader::ByteReaderLike;
-use crate::compare::Comparison;
+use super::Comparison;
+use crate::byte_read::ByteRead;
 
-pub struct SpjFloatComparer {
+pub fn float_compare(
+    std_reader: &mut impl ByteRead,
+    user_reader: &mut impl ByteRead,
     eps: f64,
-}
-
-#[derive(Debug, thiserror::Error)]
-#[error("Eps value must be a normal float number: eps = \"{0}\"")]
-struct AbnormalFloatError(f64);
-
-impl SpjFloatComparer {
-    pub fn new(eps: f64) -> Self {
-        if !eps.is_normal() {
-            crate::error::exit(1, AbnormalFloatError(eps));
-        }
-        Self { eps }
-    }
-}
-
-impl ByteComparer for SpjFloatComparer {
-    fn compare(&self, std: &mut impl ByteReaderLike, user: &mut impl ByteReaderLike) -> Comparison {
-        self::compare(std, user, self.eps)
-    }
-}
-
-/// Compare `std` and `user`. The process will be terminated on error.
-fn compare(std: &mut impl ByteReaderLike, user: &mut impl ByteReaderLike, eps: f64) -> Comparison {
+) -> Comparison {
     loop {
-        let std_f64 = match poll_f64(std) {
+        let std_f64 = match poll_f64(std_reader) {
             Ok(o) => o,
             Err(()) => return Comparison::WA,
         };
 
-        let user_f64 = match poll_f64(user) {
+        let user_f64 = match poll_f64(user_reader) {
             Ok(o) => o,
             Err(()) => return Comparison::WA,
         };
@@ -53,35 +32,39 @@ fn compare(std: &mut impl ByteReaderLike, user: &mut impl ByteReaderLike, eps: f
     }
 }
 
-fn poll_f64(bytes: &mut impl ByteReaderLike) -> Result<Option<f64>, ()> {
+fn poll_f64(reader: &mut impl ByteRead) -> Result<Option<f64>, ()> {
     let mut buf: [u8; 512] = [0; 512];
     let mut cur: usize = 0;
 
-    let mut b = bytes.next_byte();
+    let mut byte = reader.next_byte();
     loop {
-        if b.is_eof() {
-            return Ok(None);
+        match byte {
+            None => return Ok(None),
+            Some(b) => {
+                if !b.is_ascii_whitespace() {
+                    buf[cur] = b;
+                    cur += 1;
+                    byte = reader.next_byte();
+                    break;
+                }
+            }
         }
-        if !b.as_u8().is_ascii_whitespace() {
-            buf[cur] = b.as_u8();
-            cur += 1;
-            b = bytes.next_byte();
-            break;
-        }
-        b = bytes.next_byte();
+
+        byte = reader.next_byte();
     }
 
     while cur < buf.len() {
-        if b.is_eof() {
-            break;
+        match byte {
+            None => break,
+            Some(b) => {
+                if b.is_ascii_whitespace() {
+                    break;
+                }
+                buf[cur] = b;
+                cur += 1;
+            }
         }
-        let c = b.as_u8();
-        if c.is_ascii_whitespace() {
-            break;
-        }
-        buf[cur] = c;
-        cur += 1;
-        b = bytes.next_byte();
+        byte = reader.next_byte();
     }
 
     if cur >= buf.len() {
@@ -102,15 +85,15 @@ fn test_spj_float_comparer() {
 
     macro_rules! judge {
         ($ret:expr, $std:expr,$user:expr) => {{
-            let mut std = std::io::Cursor::new(&$std[..]);
-            let mut user = std::io::Cursor::new(&$user[..]);
+            let mut std: &[u8] = $std.as_ref();
+            let mut user: &[u8] = $user.as_ref();
 
-            let ret = compare(&mut std, &mut user, DEFAULT_EPS);
+            let ret = float_compare(&mut std, &mut user, DEFAULT_EPS);
             assert_eq!(ret, $ret);
         }};
     }
 
-    use crate::compare::Comparison::*;
+    use Comparison::*;
 
     judge!(AC, b"", b"");
     judge!(AC, b"1", b"1");

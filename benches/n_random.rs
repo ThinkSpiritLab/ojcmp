@@ -1,8 +1,7 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
 fn bench_normal(c: &mut Criterion, gen: fn(usize) -> (String, String), group_name: &str) {
-    use ojcmp::comparers::ByteComparer;
-    use std::io::Cursor;
+    use ojcmp::{normal_compare, Comparison};
 
     let mut group = c.benchmark_group(group_name);
     let ns = [
@@ -13,12 +12,10 @@ fn bench_normal(c: &mut Criterion, gen: fn(usize) -> (String, String), group_nam
     for &(n, ref input) in inputs.iter() {
         group.throughput(Throughput::Elements(n));
         group.bench_with_input(BenchmarkId::from_parameter(n), input, |b, (s, u)| {
-            let comparer = ojcmp::comparers::NormalComparer::new();
-
             b.iter(|| {
-                let mut s_reader = Cursor::new(s.as_bytes());
-                let mut u_reader = Cursor::new(u.as_bytes());
-                comparer.compare(&mut s_reader, &mut u_reader);
+                let mut s_reader = s.as_bytes();
+                let mut u_reader = u.as_bytes();
+                assert_ne!(normal_compare(&mut s_reader, &mut u_reader), Comparison::WA);
             })
         });
     }
@@ -98,7 +95,7 @@ fn bench_space(c: &mut Criterion) {
     bench_normal(c, generate_space, "normal-space")
 }
 
-fn bench_spj_float(c: &mut Criterion) {
+fn bench_float(c: &mut Criterion) {
     const EPS: f64 = 1e-8;
 
     fn gen(n: usize) -> (String, String) {
@@ -127,9 +124,8 @@ fn bench_spj_float(c: &mut Criterion) {
         (s, u)
     }
 
-    use ojcmp::compare::Comparison;
-    use ojcmp::comparers::ByteComparer;
-    use std::io::Cursor;
+    use ojcmp::float_compare;
+    use ojcmp::Comparison;
 
     let group_name = "spj_float";
     let mut group = c.benchmark_group(group_name);
@@ -141,13 +137,11 @@ fn bench_spj_float(c: &mut Criterion) {
     for &(n, ref input) in inputs.iter() {
         group.throughput(Throughput::Elements(n));
         group.bench_with_input(BenchmarkId::from_parameter(n), input, |b, (s, u)| {
-            let comparer = ojcmp::comparers::SpjFloatComparer::new(EPS);
-
             b.iter(|| {
-                let mut s_reader = Cursor::new(s.as_bytes());
-                let mut u_reader = Cursor::new(u.as_bytes());
+                let mut s_reader = s.as_bytes();
+                let mut u_reader = u.as_bytes();
                 assert_eq!(
-                    comparer.compare(&mut s_reader, &mut u_reader),
+                    float_compare(&mut s_reader, &mut u_reader, EPS),
                     Comparison::AC
                 );
             })
@@ -155,6 +149,6 @@ fn bench_spj_float(c: &mut Criterion) {
     }
 }
 
-criterion_group!(spj, bench_spj_float);
+criterion_group!(spj, bench_float);
 criterion_group!(normal, bench_same, bench_endline, bench_space);
 criterion_main!(normal, spj);
