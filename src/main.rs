@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
+use std::mem;
 use std::panic::{self, catch_unwind, resume_unwind, AssertUnwindSafe, UnwindSafe};
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -94,6 +95,13 @@ fn consume_all(reader: &mut impl BufRead) -> Result<()> {
     }
 }
 
+#[repr(align(8))]
+struct Align8<T>(T);
+
+const BUF_SIZE: usize = 512 * 1024;
+static mut STD_BUF: Align8<[u8; BUF_SIZE]> = Align8([0u8; BUF_SIZE]);
+static mut USER_BUF: Align8<[u8; BUF_SIZE]> = Align8([0u8; BUF_SIZE]);
+
 fn main() -> Result<()> {
     let opts: Opts = Opts::from_args();
 
@@ -102,8 +110,28 @@ fn main() -> Result<()> {
     match opts {
         Opts::Normal { reader_opts } => {
             let (std_file, user_file) = open(&reader_opts)?;
-            let mut std_reader = ByteReader::with_capacity(reader_opts.buffer_size, std_file);
-            let mut user_reader = ByteReader::with_capacity(reader_opts.buffer_size, user_file);
+
+            let (mut std_reader, mut user_reader) = {
+                if reader_opts.buffer_size <= BUF_SIZE {
+                    unsafe {
+                        (
+                            ByteReader::from_raw(
+                                &mut STD_BUF.0[..reader_opts.buffer_size],
+                                std_file,
+                            ),
+                            ByteReader::from_raw(
+                                &mut USER_BUF.0[..reader_opts.buffer_size],
+                                user_file,
+                            ),
+                        )
+                    }
+                } else {
+                    (
+                        ByteReader::with_capacity(reader_opts.buffer_size, std_file),
+                        ByteReader::with_capacity(reader_opts.buffer_size, user_file),
+                    )
+                }
+            };
 
             ans = catch_io(AssertUnwindSafe(|| {
                 ojcmp::normal_compare(&mut std_reader, &mut user_reader)
@@ -111,6 +139,11 @@ fn main() -> Result<()> {
 
             if reader_opts.read_all {
                 consume_all(&mut user_reader)?;
+            }
+
+            if reader_opts.buffer_size <= BUF_SIZE {
+                mem::forget(std_reader);
+                mem::forget(user_reader);
             }
         }
         Opts::Strict { reader_opts } => {

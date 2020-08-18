@@ -1,7 +1,9 @@
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
 #![deny(missing_debug_implementations)]
 
+#![allow(unsafe_code)]
 mod byte_read;
+
 mod compare;
 
 pub use byte_read::{ByteRead, ByteReader};

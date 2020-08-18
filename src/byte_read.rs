@@ -33,6 +33,15 @@ impl<R: Read> ByteReader<R> {
             cap: 0,
         }
     }
+
+    pub unsafe fn from_raw(buf: *mut [u8], reader: R) -> Self {
+        Self {
+            inner: reader,
+            buf: Box::from_raw(buf),
+            pos: 0,
+            cap: 0,
+        }
+    }
 }
 
 impl<R: Read> Read for ByteReader<R> {
@@ -66,6 +75,7 @@ impl<R: Read> BufRead for ByteReader<R> {
 }
 
 impl<R: Read> ByteRead for ByteReader<R> {
+    #[inline(always)]
     fn next_byte(&mut self) -> Option<u8> {
         debug_assert!(self.cap <= self.buf.len());
         if self.pos < self.cap {
