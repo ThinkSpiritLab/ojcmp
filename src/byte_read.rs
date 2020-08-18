@@ -45,6 +45,13 @@ impl<R: Read> ByteReader<R> {
             tail: ptr::null(),
         }
     }
+
+    #[allow(clippy::missing_safety_doc)]
+    pub unsafe fn into_raw(self) -> (*mut [u8], R) {
+        let buf = Box::into_raw(self.buf);
+        let reader = self.inner;
+        (buf, reader)
+    }
 }
 
 impl<R: Read> Read for ByteReader<R> {
@@ -103,6 +110,40 @@ impl<R: Read> ByteRead for ByteReader<R> {
                     }
                 }
                 Err(e) => panic!(e),
+            }
+        }
+    }
+}
+
+#[cfg(unix)]
+pub mod unix {
+    use std::fs::File;
+    use std::io::{self, Read};
+    use std::os::raw::c_void;
+    use std::os::unix::io::AsRawFd;
+
+    #[derive(Debug)]
+    pub struct UnixFdReader {
+        file: File,
+    }
+
+    impl UnixFdReader {
+        pub fn from_file(file: File) -> Self {
+            Self { file }
+        }
+    }
+
+    impl Read for UnixFdReader {
+        #[inline(always)]
+        fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+            unsafe {
+                let buf_ptr: *mut c_void = buf.as_mut_ptr().cast();
+                let fd = self.file.as_raw_fd();
+                let ret: isize = libc::read(fd, buf_ptr, buf.len());
+                if ret < 0 {
+                    panic!(io::Error::last_os_error())
+                }
+                Ok(ret as usize)
             }
         }
     }
