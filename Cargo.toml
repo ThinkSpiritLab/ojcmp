@@ -1,6 +1,6 @@
 [package]
 name = "ojcmp"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Nugine <nugine@foxmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -22,6 +22,3 @@ criterion = "0.3.3"
 [[bench]]
 name = "n_random"
 harness = false
-
-[profile.release]
-debug = true

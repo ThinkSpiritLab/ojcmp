@@ -3,21 +3,18 @@
 [![Crates.io][crates-badge]][crates-url]
 [![MIT licensed][mit-badge]][mit-url]
 ![CI][ci-badge]
-[![unsafe forbidden][unsafe-forbidden-badge]](unsafe-forbidden-url)
 
 [crates-badge]: https://img.shields.io/crates/v/ojcmp.svg
 [crates-url]: https://crates.io/crates/ojcmp
 [mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg
 [mit-url]: LICENSE
 [ci-badge]: https://github.com/ThinkSpiritLab/ojcmp/workflows/CI/badge.svg
-[unsafe-forbidden-badge]: https://img.shields.io/badge/unsafe-forbidden-success.svg
-[unsafe-forbidden-url]: https://github.com/rust-secure-code/safety-dance/
 
 > online judge comparer
 
 ## Status
 
-Maintaining `0.3.0`
+Maintaining `0.3.1`
 
 ## Install
 
@@ -46,7 +43,7 @@ cp target/release/ojcmp /usr/bin
 ## Usage
 
 ```
-ojcmp 0.3.0
+ojcmp 0.3.1
 Nugine <nugine@foxmail.com>
 
 USAGE:
@@ -115,6 +112,7 @@ There is no "PE" in this mode.
 
 ## Change Log
 
++ v0.3.1 Fix performance regression since v0.2.0. Allow unsafe code. 
 + v0.3.0 Forbid unsafe code. Use subcommands for different modes.
 
 - v0.2.2 Fix bug in nan handling. (yank v0.2.1)
