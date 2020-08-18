@@ -22,3 +22,6 @@ criterion = "0.3.3"
 [[bench]]
 name = "n_random"
 harness = false
+
+[profile.release]
+debug = true

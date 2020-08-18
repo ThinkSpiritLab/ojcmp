@@ -2,7 +2,7 @@ use std::io::{BufRead, Read};
 use std::ptr;
 use std::slice;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct IoByte {
     byte: u8,
     eof: bool,
@@ -27,7 +27,7 @@ impl IoByte {
     }
 }
 
-pub trait ByteRead: Read {
+pub trait ByteRead: BufRead {
     fn next_byte(&mut self) -> IoByte;
 }
 

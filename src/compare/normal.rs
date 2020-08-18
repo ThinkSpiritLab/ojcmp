@@ -1,47 +1,32 @@
 use crate::byte_read::{ByteRead, IoByte};
 use crate::Comparison;
+use std::cmp::{Ord, Ordering};
 
 /// Compare `std` and `user`. The process will be terminated on error.
-#[inline]
-pub fn normal_compare(std: &mut impl ByteRead, user: &mut impl ByteRead) -> Comparison {
-    let mut stdchar = std.next_byte();
-    let mut userchar = user.next_byte();
+#[inline(never)]
+pub fn normal_compare(
+    std_reader: &mut impl ByteRead,
+    user_reader: &mut impl ByteRead,
+) -> Comparison {
+    let mut std_byte = std_reader.next_byte();
+    let mut user_byte = user_reader.next_byte();
 
     let mut ans = Comparison::AC;
 
     loop {
-        if stdchar.is_eof() {
-            if userchar.is_eof() {
-                return ans;
-            }
-            if !userchar.as_u8().is_ascii_whitespace() {
-                return Comparison::WA;
-            }
-            if poll_eof(user) {
-                return ans;
-            } else {
-                return Comparison::WA;
-            }
+        if std_byte.is_eof() {
+            return handle_eof(user_reader, user_byte, ans);
         }
 
-        if userchar.is_eof() {
-            if stdchar.is_eof() {
-                return ans;
-            }
-            if !stdchar.as_u8().is_ascii_whitespace() {
-                return Comparison::WA;
-            }
-            if poll_eof(std) {
-                return ans;
-            } else {
-                return Comparison::WA;
-            }
+        if user_byte.is_eof() {
+            return handle_eof(std_reader, std_byte, ans);
         }
 
-        let (a, b) = (stdchar.as_u8(), userchar.as_u8());
+        let (a, b) = (std_byte.as_u8(), user_byte.as_u8());
         if a == b {
-            stdchar = std.next_byte();
-            userchar = user.next_byte();
+            let ret = poll_diff(std_reader, user_reader);
+            std_byte = ret.0;
+            user_byte = ret.1;
             continue;
         }
 
@@ -49,9 +34,9 @@ pub fn normal_compare(std: &mut impl ByteRead, user: &mut impl ByteRead) -> Comp
             if !b.is_ascii_whitespace() {
                 return Comparison::WA;
             }
-            if poll_endline(user) {
-                stdchar = std.next_byte();
-                userchar = user.next_byte();
+            if poll_endline(user_reader) {
+                std_byte = std_reader.next_byte();
+                user_byte = user_reader.next_byte();
                 continue;
             } else {
                 return Comparison::WA;
@@ -61,9 +46,9 @@ pub fn normal_compare(std: &mut impl ByteRead, user: &mut impl ByteRead) -> Comp
             if !a.is_ascii_whitespace() {
                 return Comparison::WA;
             }
-            if poll_endline(std) {
-                stdchar = std.next_byte();
-                userchar = user.next_byte();
+            if poll_endline(std_reader) {
+                std_byte = std_reader.next_byte();
+                user_byte = user_reader.next_byte();
                 continue;
             } else {
                 return Comparison::WA;
@@ -82,23 +67,23 @@ pub fn normal_compare(std: &mut impl ByteRead, user: &mut impl ByteRead) -> Comp
         // a != b
         // both of them are not non-space
         if flaga {
-            stdchar = poll_nonspace(std);
+            std_byte = poll_nonspace(std_reader);
         }
         if flagb {
-            userchar = poll_nonspace(user);
+            user_byte = poll_nonspace(user_reader);
         }
 
-        if stdchar.is_eof() || userchar.is_eof() {
+        if std_byte.is_eof() || user_byte.is_eof() {
             continue;
         }
 
-        let (a, b) = (stdchar.as_u8(), userchar.as_u8());
+        let (a, b) = (std_byte.as_u8(), user_byte.as_u8());
         let flaga = a == b'\n';
         let flagb = b == b'\n';
 
         if flaga & flagb {
-            stdchar = std.next_byte();
-            userchar = user.next_byte();
+            std_byte = std_reader.next_byte();
+            user_byte = user_reader.next_byte();
             continue;
         }
         if flaga | flagb {
@@ -106,8 +91,8 @@ pub fn normal_compare(std: &mut impl ByteRead, user: &mut impl ByteRead) -> Comp
         }
         if a == b {
             ans = Comparison::PE;
-            stdchar = std.next_byte();
-            userchar = user.next_byte();
+            std_byte = std_reader.next_byte();
+            user_byte = user_reader.next_byte();
             continue;
         } else {
             return Comparison::WA;
@@ -115,27 +100,129 @@ pub fn normal_compare(std: &mut impl ByteRead, user: &mut impl ByteRead) -> Comp
     }
 }
 
+#[inline(never)]
+fn handle_eof(rhs: &mut impl ByteRead, rhs_byte: IoByte, ans: Comparison) -> Comparison {
+    if rhs_byte.is_eof() {
+        return ans;
+    }
+    if !rhs_byte.as_u8().is_ascii_whitespace() {
+        return Comparison::WA;
+    }
+    if poll_eof(rhs) {
+        ans
+    } else {
+        Comparison::WA
+    }
+}
+
+#[inline]
+fn poll_diff(lhs: &mut impl ByteRead, rhs: &mut impl ByteRead) -> (IoByte, IoByte) {
+    let mut lhs_byte;
+    let mut rhs_byte;
+    let mut eq_cnt: usize = 0;
+    let mut cmp_cnt: usize = 0;
+
+    loop {
+        lhs_byte = lhs.next_byte();
+        rhs_byte = rhs.next_byte();
+        cmp_cnt += 1;
+
+        if cmp_cnt >= 1024 {
+            break;
+        }
+
+        if lhs_byte == rhs_byte {
+            eq_cnt += 1;
+            if lhs_byte.is_eof() {
+                return (lhs_byte, rhs_byte);
+            }
+        } else {
+            return (lhs_byte, rhs_byte);
+        }
+    }
+
+    loop {
+        if cmp_cnt >= 1024 && eq_cnt > cmp_cnt * 255 / 256 {
+            let len = diff_block(lhs, rhs);
+            if len == 0 {
+                eq_cnt = 0;
+                cmp_cnt = 0;
+            } else {
+                eq_cnt += len;
+                cmp_cnt += len;
+            }
+        }
+
+        lhs_byte = lhs.next_byte();
+        rhs_byte = rhs.next_byte();
+        cmp_cnt += 1;
+
+        if lhs_byte == rhs_byte {
+            eq_cnt += 1;
+            if lhs_byte.is_eof() {
+                return (lhs_byte, rhs_byte);
+            }
+        } else {
+            return (lhs_byte, rhs_byte);
+        }
+    }
+}
+
+#[inline]
+fn diff_block(lhs: &mut impl ByteRead, rhs: &mut impl ByteRead) -> usize {
+    let mut total: usize = 0;
+    loop {
+        let lhs_buf: &[u8] = match lhs.fill_buf() {
+            Ok(b) => b,
+            Err(e) => panic!(e),
+        };
+
+        let rhs_buf: &[u8] = match rhs.fill_buf() {
+            Ok(b) => b,
+            Err(e) => panic!(e),
+        };
+
+        let (lhs_buf, rhs_buf, len) = match lhs_buf.len().cmp(&rhs_buf.len()) {
+            Ordering::Equal => (lhs_buf, rhs_buf, lhs_buf.len()),
+            Ordering::Less => (lhs_buf, &rhs_buf[..lhs_buf.len()], lhs_buf.len()),
+            Ordering::Greater => (&lhs_buf[..rhs_buf.len()], rhs_buf, rhs_buf.len()),
+        };
+
+        if len == 0 {
+            break total;
+        }
+
+        if lhs_buf == rhs_buf {
+            lhs.consume(len);
+            rhs.consume(len);
+            total += len;
+            continue;
+        } else {
+            break 0;
+        }
+    }
+}
+
 /// poll until eof.
 /// ensure that all chars remaining in `chars` are ascii whitespaces
 #[inline]
-fn poll_eof(bytes: &mut impl ByteRead) -> bool {
-    let mut b = bytes.next_byte();
+fn poll_eof(reader: &mut impl ByteRead) -> bool {
     loop {
+        let b = reader.next_byte();
         if b.is_eof() {
             return true;
         }
         if !b.as_u8().is_ascii_whitespace() {
             return false;
         }
-        b = bytes.next_byte();
     }
 }
 
 /// poll until b'\n'.
 /// ensure that all chars remaining in `chars` line are ascii whitespaces
-#[inline]
-fn poll_endline(bytes: &mut impl ByteRead) -> bool {
-    let mut b = bytes.next_byte();
+#[inline(always)]
+fn poll_endline(reader: &mut impl ByteRead) -> bool {
+    let mut b = reader.next_byte();
     loop {
         if b.is_eof() || b.as_u8() == b'\n' {
             return true;
@@ -143,19 +230,18 @@ fn poll_endline(bytes: &mut impl ByteRead) -> bool {
         if !b.as_u8().is_ascii_whitespace() {
             return false;
         }
-        b = bytes.next_byte();
+        b = reader.next_byte();
     }
 }
 
 /// poll until b'\n' or non-space or EOF
-#[inline]
-fn poll_nonspace(bytes: &mut impl ByteRead) -> IoByte {
-    let mut b: IoByte = bytes.next_byte();
+#[inline(always)]
+fn poll_nonspace(reader: &mut impl ByteRead) -> IoByte {
     loop {
+        let b: IoByte = reader.next_byte();
         if b.is_eof() || b.as_u8() == b'\n' || !b.as_u8().is_ascii_whitespace() {
             return b;
         }
-        b = bytes.next_byte();
     }
 }
 
