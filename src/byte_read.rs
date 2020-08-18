@@ -2,17 +2,42 @@ use std::io::{BufRead, Read};
 use std::ptr;
 use std::slice;
 
+#[derive(Debug, Clone, Copy)]
+pub struct IoByte {
+    byte: u8,
+    eof: bool,
+}
+
+impl IoByte {
+    pub const EOF: IoByte = IoByte { byte: 0, eof: true };
+
+    #[inline(always)]
+    pub fn from_u8(byte: u8) -> Self {
+        Self { byte, eof: false }
+    }
+
+    #[inline(always)]
+    pub fn as_u8(self) -> u8 {
+        self.byte
+    }
+
+    #[inline(always)]
+    pub fn is_eof(self) -> bool {
+        self.eof
+    }
+}
+
 pub trait ByteRead: Read {
-    fn next_byte(&mut self) -> Option<u8>;
+    fn next_byte(&mut self) -> IoByte;
 }
 
 impl ByteRead for &'_ [u8] {
-    fn next_byte(&mut self) -> Option<u8> {
+    fn next_byte(&mut self) -> IoByte {
         match self {
-            [] => None,
+            [] => IoByte::EOF,
             [byte, remain @ ..] => {
                 *self = remain;
-                Some(*byte)
+                IoByte::from_u8(*byte)
             }
         }
     }
@@ -88,24 +113,24 @@ impl<R: Read> BufRead for ByteReader<R> {
 
 impl<R: Read> ByteRead for ByteReader<R> {
     #[inline(always)]
-    fn next_byte(&mut self) -> Option<u8> {
+    fn next_byte(&mut self) -> IoByte {
         if self.head != self.tail {
             unsafe {
                 let byte = *self.head;
                 self.head = self.head.add(1);
-                Some(byte)
+                IoByte::from_u8(byte)
             }
         } else {
             match self.inner.read(&mut *self.buf) {
                 Ok(nread) => {
                     if nread == 0 {
-                        None
+                        IoByte::EOF
                     } else {
                         unsafe {
                             let byte = *self.buf.as_ptr();
                             self.head = self.buf.as_ptr().add(1);
                             self.tail = self.buf.as_ptr().add(nread);
-                            Some(byte)
+                            IoByte::from_u8(byte)
                         }
                     }
                 }

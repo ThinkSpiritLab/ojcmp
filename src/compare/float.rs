@@ -38,31 +38,30 @@ fn poll_f64(reader: &mut impl ByteRead) -> Result<Option<f64>, ()> {
 
     let mut byte = reader.next_byte();
     loop {
-        match byte {
-            None => return Ok(None),
-            Some(b) => {
-                if !b.is_ascii_whitespace() {
-                    buf[cur] = b;
-                    cur += 1;
-                    byte = reader.next_byte();
-                    break;
-                }
+        if byte.is_eof() {
+            return Ok(None);
+        } else {
+            let b = byte.as_u8();
+            if !b.is_ascii_whitespace() {
+                buf[cur] = b;
+                cur += 1;
+                byte = reader.next_byte();
+                break;
             }
         }
-
         byte = reader.next_byte();
     }
 
     while cur < buf.len() {
-        match byte {
-            None => break,
-            Some(b) => {
-                if b.is_ascii_whitespace() {
-                    break;
-                }
-                buf[cur] = b;
-                cur += 1;
+        if byte.is_eof() {
+            break;
+        } else {
+            let b = byte.as_u8();
+            if b.is_ascii_whitespace() {
+                break;
             }
+            buf[cur] = b;
+            cur += 1;
         }
         byte = reader.next_byte();
     }
@@ -98,6 +97,7 @@ fn test_spj_float_comparer() {
     judge!(AC, b"", b"");
     judge!(AC, b"1", b"1");
     judge!(AC, b"12", b"12");
+    judge!(AC, b"12 34", b"12 34");
 
     judge!(WA, b"", b"a");
     judge!(WA, b"a", b"");
