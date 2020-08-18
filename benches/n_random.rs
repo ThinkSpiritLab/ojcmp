@@ -1,3 +1,5 @@
+#![allow(clippy::write_with_newline)]
+
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
 fn bench_normal(c: &mut Criterion, gen: fn(usize) -> (String, String), group_name: &str) {

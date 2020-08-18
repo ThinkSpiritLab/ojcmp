@@ -47,7 +47,7 @@ struct ReaderOpts {
         name = "buffer-size",
         short = "b",
         long,
-        default_value = "4096",
+        default_value = "65536",
         value_name = "bytes"
     )]
     /// Buffer size (in bytes) for both std and user file
@@ -106,10 +106,10 @@ fn handle_normal(reader_opts: ReaderOpts) -> Result<Comparison> {
 
     let (mut std_reader, mut user_reader) = {
         #[cfg(unix)]
-        let std_file = ojcmp::byte_read::unix::UnixFdReader::from_file(std_file);
+        let std_file = ojcmp::UnixFdReader::from_file(std_file);
 
         #[cfg(unix)]
-        let user_file = ojcmp::byte_read::unix::UnixFdReader::from_file(user_file);
+        let user_file = ojcmp::UnixFdReader::from_file(user_file);
 
         if reader_opts.buffer_size <= BUF_SIZE {
             unsafe {

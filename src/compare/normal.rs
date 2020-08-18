@@ -2,7 +2,6 @@ use crate::byte_read::{ByteRead, IoByte};
 use crate::Comparison;
 use std::cmp::{Ord, Ordering};
 
-/// Compare `std` and `user`. The process will be terminated on error.
 #[inline(never)]
 pub fn normal_compare(
     std_reader: &mut impl ByteRead,
