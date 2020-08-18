@@ -29,6 +29,9 @@ impl IoByte {
 
 pub trait ByteRead: BufRead {
     fn next_byte(&mut self) -> IoByte;
+
+    #[allow(clippy::missing_safety_doc)]
+    unsafe fn consume_unchecked(&mut self, amt: usize);
 }
 
 impl ByteRead for &'_ [u8] {
@@ -40,6 +43,9 @@ impl ByteRead for &'_ [u8] {
                 IoByte::from_u8(*byte)
             }
         }
+    }
+    unsafe fn consume_unchecked(&mut self, amt: usize) {
+        *self = &self[amt..];
     }
 }
 
@@ -137,6 +143,9 @@ impl<R: Read> ByteRead for ByteReader<R> {
                 Err(e) => panic!(e),
             }
         }
+    }
+    unsafe fn consume_unchecked(&mut self, amt: usize) {
+        self.head = self.head.add(amt);
     }
 }
 

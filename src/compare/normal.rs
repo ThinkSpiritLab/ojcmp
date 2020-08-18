@@ -117,6 +117,27 @@ fn handle_eof(rhs: &mut impl ByteRead, rhs_byte: IoByte, ans: Comparison) -> Com
 
 #[inline]
 fn poll_diff(lhs: &mut impl ByteRead, rhs: &mut impl ByteRead) -> (IoByte, IoByte) {
+    {
+        let lhs_buf = match lhs.fill_buf() {
+            Ok(b) => b,
+            Err(e) => panic!(e),
+        };
+        let rhs_buf = match rhs.fill_buf() {
+            Ok(b) => b,
+            Err(e) => panic!(e),
+        };
+        if lhs_buf.len() >= 8 && rhs_buf.len() >= 8 {
+            unsafe {
+                let lhs_buf = lhs_buf.get_unchecked(..8);
+                let rhs_buf = rhs_buf.get_unchecked(..8);
+                if lhs_buf == rhs_buf {
+                    lhs.consume_unchecked(8);
+                    rhs.consume_unchecked(8);
+                }
+            }
+        }
+    }
+
     let mut lhs_byte;
     let mut rhs_byte;
     let mut eq_cnt: usize = 0;

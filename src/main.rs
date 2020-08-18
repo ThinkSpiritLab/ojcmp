@@ -94,12 +94,12 @@ fn consume_all(reader: &mut impl BufRead) -> Result<()> {
     }
 }
 
-#[repr(align(8))]
-struct Align8<T>(T);
+#[repr(align(16))]
+struct Align16<T>(T);
 
 const BUF_SIZE: usize = 512 * 1024;
-static mut STD_BUF: Align8<[u8; BUF_SIZE]> = Align8([0u8; BUF_SIZE]);
-static mut USER_BUF: Align8<[u8; BUF_SIZE]> = Align8([0u8; BUF_SIZE]);
+static mut STD_BUF: Align16<[u8; BUF_SIZE]> = Align16([0u8; BUF_SIZE]);
+static mut USER_BUF: Align16<[u8; BUF_SIZE]> = Align16([0u8; BUF_SIZE]);
 
 fn handle_normal(reader_opts: ReaderOpts) -> Result<Comparison> {
     let (std_file, user_file) = open(&reader_opts)?;
