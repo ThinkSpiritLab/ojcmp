@@ -1,6 +1,6 @@
 [package]
 name = "ojcmp"
-version = "0.3.1"
+version = "0.3.2-dev"
 authors = ["Nugine <nugine@foxmail.com>"]
 edition = "2018"
 license = "MIT"

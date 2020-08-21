@@ -308,7 +308,7 @@ dependencies = [
 
 [[package]]
 name = "ojcmp"
-version = "0.3.1"
+version = "0.3.2-dev"
 dependencies = [
  "anyhow 1.0.31 (registry+https://github.com/rust-lang/crates.io-index)",
  "criterion 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
