@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{BufRead, Read};
+use std::io::{self, BufRead, Read};
 use std::ptr;
 use std::slice;
 
@@ -50,7 +50,13 @@ impl ByteRead for &'_ [u8] {
     }
 }
 
-pub unsafe trait TrustedRead: Read {}
+pub unsafe trait TrustedRead: Read {
+    #[inline]
+    fn trusted_read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        let nread = <Self as Read>::read(self, buf)?;
+        Ok(nread.min(buf.len()))
+    }
+}
 
 unsafe impl TrustedRead for File {}
 
@@ -102,7 +108,7 @@ impl<R: TrustedRead> BufRead for ByteReader<R> {
             let len = self.tail as usize - self.head as usize;
             Ok(unsafe { slice::from_raw_parts(self.head, len) })
         } else {
-            let nread = self.inner.read(&mut *self.buf)?;
+            let nread = self.inner.trusted_read(&mut *self.buf)?;
             if nread == 0 {
                 self.head = ptr::null();
                 self.tail = ptr::null();
@@ -132,7 +138,7 @@ impl<R: TrustedRead> ByteRead for ByteReader<R> {
                 IoByte::from_u8(byte)
             }
         } else {
-            match self.inner.read(&mut *self.buf) {
+            match self.inner.trusted_read(&mut *self.buf) {
                 Ok(nread) => {
                     if nread == 0 {
                         IoByte::EOF
@@ -190,5 +196,9 @@ pub mod unix {
         }
     }
 
-    unsafe impl TrustedRead for UnixFdReader {}
+    unsafe impl TrustedRead for UnixFdReader {
+        fn trusted_read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+            <Self as Read>::read(self, buf)
+        }
+    }
 }
