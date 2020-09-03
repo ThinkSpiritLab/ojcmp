@@ -13,7 +13,7 @@ repository = "https://github.com/ThinkSpiritLab/ojcmp"
 structopt = "0.3.15"
 lexical-core = "0.7.4"
 anyhow = "1.0.31"
-libc = "0.2.74"
+libc = "0.2.76"
 
 [dev-dependencies]
 rand = "0.7.3"
