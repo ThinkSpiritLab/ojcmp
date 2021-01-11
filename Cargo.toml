@@ -16,7 +16,7 @@ anyhow = "1.0.35"
 libc = "0.2.81"
 
 [dev-dependencies]
-rand = "0.7.3"
+rand = "0.8.1"
 criterion = "0.3.3"
 
 [[bench]]
