@@ -14,7 +14,7 @@
 
 ## Status
 
-Maintaining `0.3.1`
+Maintaining `0.3.2`
 
 ## Install
 
@@ -43,7 +43,7 @@ cp target/release/ojcmp /usr/bin
 ## Usage
 
 ```
-ojcmp 0.3.1
+ojcmp 0.3.2
 Nugine <nugine@foxmail.com>
 
 USAGE:
@@ -112,6 +112,7 @@ There is no "PE" in this mode.
 
 ## Change Log
 
++ v0.3.2 Fix unsoundness in ByteReader.
 + v0.3.1 Fix performance regression since v0.2.0. Allow unsafe code. 
 + v0.3.0 Forbid unsafe code. Use subcommands for different modes.
 
