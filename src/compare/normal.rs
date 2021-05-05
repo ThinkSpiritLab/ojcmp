@@ -1,12 +1,22 @@
-use crate::byte_read::{ByteRead, IoByte};
-use crate::Comparison;
-use std::cmp::{Ord, Ordering};
+use super::{catch_io, CompareError, Comparison};
 
-#[inline(never)]
-pub fn normal_compare(
+use crate::byte_read::{ByteRead, IoByte};
+
+use std::cmp::{Ord, Ordering};
+use std::panic::{panic_any, AssertUnwindSafe};
+
+pub fn try_normal_compare(
     std_reader: &mut impl ByteRead,
     user_reader: &mut impl ByteRead,
-) -> Comparison {
+) -> Result<Comparison, CompareError> {
+    catch_io(AssertUnwindSafe(move || {
+        normal_compare(std_reader, user_reader)
+    }))
+    .map_err(CompareError::Io)
+}
+
+#[inline(never)]
+fn normal_compare(std_reader: &mut impl ByteRead, user_reader: &mut impl ByteRead) -> Comparison {
     let mut std_byte = std_reader.next_byte();
     let mut user_byte = user_reader.next_byte();
 
@@ -119,11 +129,11 @@ fn poll_diff(lhs: &mut impl ByteRead, rhs: &mut impl ByteRead) -> (IoByte, IoByt
     {
         let lhs_buf = match lhs.fill_buf() {
             Ok(b) => b,
-            Err(e) => panic!(e),
+            Err(e) => panic_any(e),
         };
         let rhs_buf = match rhs.fill_buf() {
             Ok(b) => b,
-            Err(e) => panic!(e),
+            Err(e) => panic_any(e),
         };
         if lhs_buf.len() >= 8 && rhs_buf.len() >= 8 {
             unsafe {
@@ -194,12 +204,12 @@ fn diff_block(lhs: &mut impl ByteRead, rhs: &mut impl ByteRead) -> usize {
     loop {
         let lhs_buf: &[u8] = match lhs.fill_buf() {
             Ok(b) => b,
-            Err(e) => panic!(e),
+            Err(e) => panic_any(e),
         };
 
         let rhs_buf: &[u8] = match rhs.fill_buf() {
             Ok(b) => b,
-            Err(e) => panic!(e),
+            Err(e) => panic_any(e),
         };
 
         let (lhs_buf, rhs_buf, len) = match lhs_buf.len().cmp(&rhs_buf.len()) {

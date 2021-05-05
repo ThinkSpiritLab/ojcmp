@@ -3,7 +3,7 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
 fn bench_normal(c: &mut Criterion, gen: fn(usize) -> (String, String), group_name: &str) {
-    use ojcmp::{normal_compare, Comparison};
+    use ojcmp::{try_normal_compare, Comparison};
 
     let mut group = c.benchmark_group(group_name);
     let ns = [
@@ -17,7 +17,10 @@ fn bench_normal(c: &mut Criterion, gen: fn(usize) -> (String, String), group_nam
             b.iter(|| {
                 let mut s_reader = s.as_bytes();
                 let mut u_reader = u.as_bytes();
-                assert_ne!(normal_compare(&mut s_reader, &mut u_reader), Comparison::WA);
+                assert_ne!(
+                    try_normal_compare(&mut s_reader, &mut u_reader).unwrap(),
+                    Comparison::WA
+                );
             })
         });
     }
@@ -126,7 +129,7 @@ fn bench_float(c: &mut Criterion) {
         (s, u)
     }
 
-    use ojcmp::float_compare;
+    use ojcmp::try_float_compare;
     use ojcmp::Comparison;
 
     let group_name = "spj_float";
@@ -143,7 +146,7 @@ fn bench_float(c: &mut Criterion) {
                 let mut s_reader = s.as_bytes();
                 let mut u_reader = u.as_bytes();
                 assert_eq!(
-                    float_compare(&mut s_reader, &mut u_reader, EPS),
+                    try_float_compare(&mut s_reader, &mut u_reader, EPS).unwrap(),
                     Comparison::AC
                 );
             })

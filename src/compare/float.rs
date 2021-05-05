@@ -1,7 +1,21 @@
-use super::Comparison;
+use super::{catch_io, CompareError, Comparison};
+
 use crate::byte_read::ByteRead;
 
-pub fn float_compare(
+use std::panic::AssertUnwindSafe;
+
+pub fn try_float_compare(
+    std_reader: &mut impl ByteRead,
+    user_reader: &mut impl ByteRead,
+    eps: f64,
+) -> Result<Comparison, CompareError> {
+    catch_io(AssertUnwindSafe(move || {
+        float_compare(std_reader, user_reader, eps)
+    }))
+    .map_err(CompareError::Io)
+}
+
+fn float_compare(
     std_reader: &mut impl ByteRead,
     user_reader: &mut impl ByteRead,
     eps: f64,

@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::{self, BufRead, Read};
+use std::panic::panic_any;
 use std::ptr;
 use std::slice;
 
@@ -151,7 +152,7 @@ impl<R: TrustedRead> ByteRead for ByteReader<R> {
                         }
                     }
                 }
-                Err(e) => panic!(e),
+                Err(e) => panic_any(e),
             }
         }
     }
@@ -168,6 +169,7 @@ pub mod unix {
     use std::io::{self, Read};
     use std::os::raw::c_void;
     use std::os::unix::io::AsRawFd;
+    use std::panic::panic_any;
 
     #[derive(Debug)]
     pub struct UnixFdReader {
@@ -188,7 +190,7 @@ pub mod unix {
                 let fd = self.file.as_raw_fd();
                 let ret: isize = libc::read(fd, buf_ptr, buf.len());
                 if ret < 0 {
-                    panic!(io::Error::last_os_error())
+                    panic_any(io::Error::last_os_error());
                 }
                 assert!(ret as usize <= buf.len());
                 Ok(ret as usize)

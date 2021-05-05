@@ -1,7 +1,14 @@
-use super::Comparison;
+use super::{CompareError, Comparison};
 
 use std::cmp::Ordering;
 use std::io::{self, BufRead};
+
+pub fn try_strict_compare(
+    std_reader: &mut impl BufRead,
+    user_reader: &mut impl BufRead,
+) -> Result<Comparison, CompareError> {
+    strict_compare(std_reader, user_reader).map_err(CompareError::Io)
+}
 
 fn fill_buf(reader: &mut impl BufRead) -> io::Result<Option<&[u8]>> {
     let buf = reader.fill_buf()?;
@@ -12,7 +19,7 @@ fn fill_buf(reader: &mut impl BufRead) -> io::Result<Option<&[u8]>> {
     }
 }
 
-pub fn strict_compare(
+fn strict_compare(
     std_reader: &mut impl BufRead,
     user_reader: &mut impl BufRead,
 ) -> io::Result<Comparison> {

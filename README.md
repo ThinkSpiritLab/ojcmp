@@ -14,7 +14,7 @@
 
 ## Status
 
-Maintaining `0.3.2`
+Maintaining `0.4.0`
 
 ## Install
 
@@ -43,7 +43,7 @@ cp target/release/ojcmp /usr/bin
 ## Usage
 
 ```
-ojcmp 0.3.2
+ojcmp 0.4.0
 Nugine <nugine@foxmail.com>
 
 USAGE:
@@ -60,13 +60,37 @@ SUBCOMMANDS:
     strict    Strict compare
 ```
 
+```
+ojcmp-normal 0.4.0
+Normal compare
+
+USAGE:
+    ojcmp normal [FLAGS] [OPTIONS] <--std <path>|--std-fd <fd>> <--user <path>|--user-fd <fd>>
+
+FLAGS:
+    -h, --help        Prints help information
+    -q, --quiet       No output printed to stdout or stderr
+    -a, --read-all    Reads all bytes of user file even if it's already WA
+    -V, --version     Prints version information
+
+OPTIONS:
+    -b, --buffer-size <bytes>    Buffer size (in bytes) for both std and user file [default: 65536]
+    -s, --std <path>             Std file path
+        --std-fd <fd>            Std file descriptor
+    -u, --user <path>            User file path
+        --user-fd <fd>           User file descriptor
+```
+
 ## Return Value
 
-| type   | value              |
-| ------ | ------------------ |
-| code   | errno              |
-| stdout | "AC" / "WA" / "PE" |
-| stderr | error message      |
+| type              | value              |
+| ----------------- | ------------------ |
+| exit_code (AC)    | 0                  |
+| exit_code (WA)    | 1                  |
+| exit_code (PE)    | 2                  |
+| exit_code (error) | 101                |
+| stdout            | "AC" / "WA" / "PE" |
+| stderr            | error message      |
 
 ## Current Implementation
 
@@ -111,6 +135,8 @@ Use CLI option `--eps` to specify eps value, for example `--eps 1e-3`.
 There is no "PE" in this mode.
 
 ## Change Log
+
+- v0.4.0 Allow passing file fd. Change return value to indicate comparison result.
 
 + v0.3.2 Fix unsoundness in ByteReader.
 + v0.3.1 Fix performance regression since v0.2.0. Allow unsafe code. 
