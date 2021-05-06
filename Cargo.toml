@@ -11,7 +11,7 @@ repository = "https://github.com/ThinkSpiritLab/ojcmp"
 
 [dependencies]
 structopt = "0.3.21"
-lexical-core = "0.7.5"
+lexical-core = "0.7.6"
 anyhow = "1.0.40"
 libc = "0.2.92"
 
