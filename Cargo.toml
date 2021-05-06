@@ -1,6 +1,6 @@
 [package]
 name = "ojcmp"
-version = "0.4.0-dev"
+version = "0.4.0"
 authors = ["Nugine <nugine@foxmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -11,9 +11,9 @@ repository = "https://github.com/ThinkSpiritLab/ojcmp"
 
 [dependencies]
 structopt = "0.3.21"
-lexical-core = "0.7.5"
+lexical-core = "0.7.6"
 anyhow = "1.0.40"
-libc = "0.2.92"
+libc = "0.2.94"
 
 [dev-dependencies]
 rand = "0.8.3"
