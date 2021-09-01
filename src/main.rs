@@ -117,7 +117,7 @@ static mut STD_BUF: Align16<[u8; BUF_SIZE]> = Align16([0u8; BUF_SIZE]);
 static mut USER_BUF: Align16<[u8; BUF_SIZE]> = Align16([0u8; BUF_SIZE]);
 
 fn handle_normal(common_opts: &CommonOpts) -> Result<Comparison> {
-    let (std_file, user_file) = open(&common_opts)?;
+    let (std_file, user_file) = open(common_opts)?;
 
     let (mut std_reader, mut user_reader) = {
         #[cfg(unix)]
@@ -158,7 +158,7 @@ fn handle_normal(common_opts: &CommonOpts) -> Result<Comparison> {
 }
 
 fn handle_strict(common_opts: &CommonOpts) -> Result<Comparison> {
-    let (std_file, user_file) = open(&common_opts)?;
+    let (std_file, user_file) = open(common_opts)?;
     let mut std_reader = BufReader::with_capacity(common_opts.buffer_size, std_file);
     let mut user_reader = BufReader::with_capacity(common_opts.buffer_size, user_file);
 
@@ -172,7 +172,7 @@ fn handle_strict(common_opts: &CommonOpts) -> Result<Comparison> {
 }
 
 fn handle_float(common_opts: &CommonOpts, eps: f64) -> Result<Comparison> {
-    let (std_file, user_file) = open(&common_opts)?;
+    let (std_file, user_file) = open(common_opts)?;
     let mut std_reader = ByteReader::with_capacity(common_opts.buffer_size, std_file);
     let mut user_reader = ByteReader::with_capacity(common_opts.buffer_size, user_file);
 
