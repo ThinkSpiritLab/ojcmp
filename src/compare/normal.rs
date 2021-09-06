@@ -291,6 +291,10 @@ fn test_normal_comparer() {
 
     judge!(WA, b"1", b"2");
     judge!(WA, b"1\r\n", b"2\n");
+    judge!(WA, b"1 \n2", b"12");
+    judge!(PE, b"1 2", b"12");
+    judge!(PE, b"1\t2", b"12");
+    judge!(PE, b"1\t2", b"1 2");
     judge!(PE, b"1\r3\n", b"1\t3\n");
     judge!(PE, b"1 3\n", b"1\t3\n");
     judge!(PE, b"1 3\n", b"1         3\n");
